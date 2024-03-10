@@ -1,17 +1,33 @@
+#!/usr/bin/env python3
+
 import sys
 from operator import itemgetter
+from collections import defaultdict
+from datetime import datetime, timedelta
 
-dict_ip_count = {}
+hourly_ip_count = defaultdict(lambda: defaultdict(int))
 
 for line in sys.stdin:
     line = line.strip()
-    ip, num = line.split('\t')
-    try:
-        num = int(num)
-        dict_ip_count[ip] = dict_ip_count.get(ip, 0) + num
-    except ValueError:
-        pass
+    hour, ip, count = line.split('\t', 2)
+    count = int(count)
+    hourly_ip_count[hour][ip] += count
 
-sorted_dict_ip_count = sorted(dict_ip_count.items(), key=itemgetter(1), reverse=True)[:3]
-for ip, count in sorted_dict_ip_count:
-    print(f"{ip}\t{count}")
+print("Top 3 IP Addresses for each hour")
+
+# Iterating through each hour
+for hour, ip_counts in hourly_ip_count.items():
+    start_time = datetime.strptime(hour, "%H")
+    end_time = start_time + timedelta(hours=1) - timedelta(seconds=1)
+    hour_range = f"{start_time.strftime('%H:%M:%S')} to {end_time.strftime('%H:%M:%S')}"
+    
+    # Sorting IP addresses based on their counts
+    sorted_ips = sorted(ip_counts.items(), key=itemgetter(1), reverse=True)
+    
+    # Output the top-3 IP addresses for each hour
+    top_3_ips = sorted_ips[:3]
+    
+    print(f"From hour {hour_range}")
+    
+    for ip, count in top_3_ips:
+        print(f"\tIP: {ip}, Count: {count}")
